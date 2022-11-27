@@ -6,6 +6,7 @@ import re
 import crcmod
 from dataclasses import dataclass
 from typing import Union, Dict
+from datetime import datetime
 
 import serial
 
@@ -53,6 +54,14 @@ class Measure:
     unit: str
     comment: str
 
+    def short_id(self):
+        return self.obis.split(':')[1]
+
+@dataclass
+class Telegram:
+    measures: Dict[str, Measure]
+    timestamp: datetime
+
 
 class SerialDSMR:
 
@@ -68,8 +77,8 @@ class SerialDSMR:
                             'port': "/dev/ttyUSB0"}
 
 
-    def parse_telegram(self, content: str):
-        data = {}
+    def parse_telegram(self, content: str) -> Telegram:
+        measures = {}
         for obis in CODES.keys():
             m = re.search(f"{obis}\((.*)\)", content)
             if m is not None:
@@ -85,14 +94,16 @@ class SerialDSMR:
                 else:
                     value = int(value_s)
 
-                data[obis] = Measure(obis=obis,
+                measure = Measure(obis=obis,
                                      value=value,
                                      unit=unit,
                                      comment=CODES[obis])
+                measures[measure.short_id()] = measure
 
-        return data
+        return Telegram(measures=measures,
+                        timestamp=datetime.utcnow())
 
-    def read_telegram(self) -> Dict[str, Measure]:
+    def read_telegram(self) -> Telegram:
         with serial.Serial(**self.serial_conf) as ser:
             # read up to checksum
             telegram = ''

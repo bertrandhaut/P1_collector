@@ -23,3 +23,11 @@ LOGGING:
       level: INFO
     fiona:
       level: INFO
+
+
+mysql:
+  host: FILLHERE
+  user:  FILLHERE
+  password: FILLHERE
+  db: FILLHERE
+

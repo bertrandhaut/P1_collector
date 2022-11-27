@@ -4,7 +4,9 @@ import os
 
 import yaml
 import click
+
 from p1_collector.serial_dsmr import SerialDSMR
+from p1_collector.sql_output import SQLOutput
 
 
 logger = logging.getLogger(__name__)
@@ -42,8 +44,12 @@ def start(config_file):
     configure_logger(config['LOGGING'])
     logger.debug('Logger configured')
 
-    measures = SerialDSMR().read_telegram()
-    logger.debug(measures)
+    telegram = SerialDSMR().read_telegram()
+    logger.debug(f'Telegram at {telegram.timestamp}: \n {telegram}')
+
+    sql_output = SQLOutput(**config['mysql'])
+    sql_output.add_measures(telegram)
+    logger.debug(f'Telegram sent to DB')
 
 
 if __name__ == "__main__":
